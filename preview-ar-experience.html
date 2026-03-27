@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JoyaTech AR Card — Preview</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a14;
+      color: white;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      overflow-x: hidden;
+    }
+
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Animated background */
+    .bg-particles {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 0;
+    }
+
+    .content { position: relative; z-index: 1; text-align: center; padding: 40px 20px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(233, 69, 96, 0.1);
+      border: 1px solid rgba(233, 69, 96, 0.3);
+      border-radius: 100px;
+      padding: 8px 20px;
+      margin-bottom: 24px;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #E94560;
+    }
+
+    .badge-dot {
+      width: 8px; height: 8px;
+      background: #E94560;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4); }
+      50% { opacity: 0.6; box-shadow: 0 0 0 8px rgba(233, 69, 96, 0); }
+    }
+
+    h1 {
+      font-size: clamp(32px, 6vw, 56px);
+      font-weight: 200;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    h1 span { color: #E94560; font-weight: 700; }
+
+    .subtitle {
+      font-size: 16px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 48px;
+      letter-spacing: 1px;
+    }
+
+    /* 3D Logo Preview */
+    .logo-3d-container {
+      width: 300px;
+      height: 300px;
+      margin: 0 auto 40px;
+      position: relative;
+    }
+
+    .hex-logo {
+      width: 100%;
+      height: 100%;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotateY(0deg); }
+      50% { transform: translateY(-15px) rotateY(10deg); }
+    }
+
+    .orbit-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      border: 1px solid rgba(233, 69, 96, 0.2);
+      border-radius: 50%;
+      animation: spin 8s linear infinite;
+    }
+
+    .orbit-ring:nth-child(1) { width: 260px; height: 260px; margin: -130px 0 0 -130px; }
+    .orbit-ring:nth-child(2) { width: 320px; height: 320px; margin: -160px 0 0 -160px; animation-duration: 12s; animation-direction: reverse; border-color: rgba(22, 33, 62, 0.4); }
+
+    .orbit-dot {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: #E94560;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Social buttons */
+    .social-bar {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .social-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      animation: pop-in 0.5s ease-out backwards;
+    }
+
+    .social-btn:nth-child(1) { animation-delay: 0.1s; }
+    .social-btn:nth-child(2) { animation-delay: 0.2s; }
+    .social-btn:nth-child(3) { animation-delay: 0.3s; }
+    .social-btn:nth-child(4) { animation-delay: 0.4s; }
+    .social-btn:nth-child(5) { animation-delay: 0.5s; }
+    .social-btn:nth-child(6) { animation-delay: 0.6s; }
+
+    @keyframes pop-in {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .social-btn:hover { transform: scale(1.2) translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+
+    .btn-linkedin { background: #0A66C2; color: white; }
+    .btn-whatsapp { background: #25D366; color: white; }
+    .btn-instagram { background: linear-gradient(135deg, #833AB4, #FD1D1D, #F77737); color: white; }
+    .btn-web { background: #E94560; color: white; }
+    .btn-phone { background: #16213E; color: white; border: 2px solid #E94560; }
+    .btn-vcard { background: #1A1A2E; color: #E94560; border: 2px solid #E94560; }
+
+    .social-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 6px;
+    }
+
+    .social-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Info card */
+    .info-card {
+      background: rgba(26, 26, 46, 0.8);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(233, 69, 96, 0.2);
+      border-radius: 20px;
+      padding: 32px 40px;
+      max-width: 500px;
+      margin: 0 auto 40px;
+    }
+
+    .info-name { font-size: 28px; font-weight: 300; }
+    .info-title { color: #E94560; font-size: 14px; margin-top: 4px; }
+    .info-company { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 2px; }
+
+    .info-divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(to right, #E94560, transparent);
+      margin: 16px 0;
+    }
+
+    .info-tagline {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 1px;
+    }
+
+    /* Features */
+    .features {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+
+    .feature-chip {
+      background: rgba(233, 69, 96, 0.1);
+      border: 1px solid rgba(233, 69, 96, 0.15);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 0.5px;
+    }
+
+    .cta {
+      margin-top: 40px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #E94560;
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+    }
+
+    .cta:hover { background: #d63652; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(233, 69, 96, 0.3); }
+
+    .footer {
+      margin-top: 60px;
+      color: rgba(255,255,255,0.2);
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+
+    /* Particles canvas */
+    canvas#particles { position: fixed; top: 0; left: 0; z-index: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+
+  <canvas id="particles"></canvas>
+
+  <div class="hero">
+    <div class="content">
+      <div class="badge">
+        <div class="badge-dot"></div>
+        AR Business Card
+      </div>
+
+      <!-- 3D Logo -->
+      <div class="logo-3d-container">
+        <div class="orbit-ring"><div class="orbit-dot" style="top:-3px;left:50%;"></div></div>
+        <div class="orbit-ring"><div class="orbit-dot" style="bottom:-3px;right:20%;"></div></div>
+        <svg class="hex-logo" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#E94560;stop-opacity:0.8"/>
+              <stop offset="100%" style="stop-color:#16213E;stop-opacity:0.6"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <polygon points="150,30 260,90 260,210 150,270 40,210 40,90" fill="none" stroke="url(#hexGrad)" stroke-width="2" filter="url(#glow)" opacity="0.3"/>
+          <polygon points="150,60 230,105 230,195 150,240 70,195 70,105" fill="rgba(233,69,96,0.05)" stroke="#E94560" stroke-width="2.5" filter="url(#glow)"/>
+          <polygon points="150,90 200,120 200,180 150,210 100,180 100,120" fill="rgba(26,26,46,0.8)" stroke="rgba(233,69,96,0.4)" stroke-width="1"/>
+          <text x="150" y="170" text-anchor="middle" fill="#E94560" font-size="60" font-weight="700" font-family="Arial" filter="url(#glow)">J</text>
+          <text x="150" y="195" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="11" font-weight="400" font-family="Arial" letter-spacing="6">JOYATECH</text>
+        </svg>
+      </div>
+
+      <!-- Info card -->
+      <div class="info-card">
+        <div class="info-name">Gal Sasson</div>
+        <div class="info-title">CEO & Founder</div>
+        <div class="info-company">JoyaTech Digital Solutions</div>
+        <div class="info-divider"></div>
+        <div class="info-tagline">AI Automation · Web Development · Digital Strategy</div>
+      </div>
+
+      <!-- Social links -->
+      <div class="social-bar">
+        <div class="social-item">
+          <a class="social-btn btn-linkedin" href="https://linkedin.com/in/galsasson" target="_blank">in</a>
+          <span class="social-label">LinkedIn</span>
+        </div>
+        <div class="social-item">
+          <a class="social-btn btn-whatsapp" href="https://wa.me/972547773731" target="_blank">💬</a>
+          <span class="social-label">WhatsApp</span>
+        </div>
+        <div class="social-item">
+          <a class="social-btn btn-instagram" href="https://instagram.com/joyatech.il" target="_blank">📸</a>
+          <span class="social-label">Instagram</span>
+        </div>
+        <div class="social-item">
+          <a class="social-btn btn-web" href="https://joya-tech.net" target="_blank">🌐</a>
+          <span class="social-label">Website</span>
+        </div>
+        <div class="social-item">
+          <a class="social-btn btn-phone" href="tel:+972547773731">📞</a>
+          <span class="social-label">Call</span>
+        </div>
+        <div class="social-item">
+          <button class="social-btn btn-vcard" onclick="downloadVCard()">👤</button>
+          <span class="social-label">Save Contact</span>
+        </div>
+      </div>
+
+      <!-- Feature chips -->
+      <div class="features">
+        <span class="feature-chip">🤖 AI Agents</span>
+        <span class="feature-chip">⚡ n8n Automation</span>
+        <span class="feature-chip">🌐 React / Next.js</span>
+        <span class="feature-chip">📊 Airtable CRM</span>
+        <span class="feature-chip">📍 Haifa, Israel</span>
+      </div>
+
+      <a class="cta" href="https://joya-tech.net" target="_blank">
+        Visit joya-tech.net →
+      </a>
+
+      <div class="footer">POWERED BY 8TH WALL OPEN SOURCE · JOYATECH © 2026</div>
+    </div>
+  </div>
+
+  <script>
+    // Particle animation
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const particleCount = 80;
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        size: Math.random() * 2 + 0.5,
+        color: Math.random() > 0.5 ? 'rgba(233, 69, 96,' : 'rgba(22, 33, 62,',
+        opacity: Math.random() * 0.5 + 0.1,
+      });
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + p.opacity + ')';
+        ctx.fill();
+      });
+
+      // Draw connections
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(233, 69, 96, ${0.05 * (1 - dist / 120)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // vCard download
+    function downloadVCard() {
+      const vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:Gal Sasson
+N:Sasson;Gal;;;
+ORG:JoyaTech Digital Solutions
+TITLE:CEO & Founder
+TEL;TYPE=CELL:+972-54-777-3731
+EMAIL:gal@joya-tech.net
+URL:https://joya-tech.net
+ADR;TYPE=WORK:;;Haifa;;Israel
+NOTE:AI Automation | Web Development | Digital Strategy
+END:VCARD`;
+
+      const blob = new Blob([vcard], { type: 'text/vcard' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Gal_Sasson_JoyaTech.vcf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  </script>
+
+</body>
+</html>

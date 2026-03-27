@@ -1,0 +1,590 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>JoyaTech AR Business Card</title>
+
+  <script crossorigin="anonymous" src="../external/scripts/8frame-1.5.0.min.js"></script>
+  <script crossorigin="anonymous" src="../external/xrextras/xrextras.js"></script>
+  <script crossorigin="anonymous" src="../external/landing-page/landing-page.js"></script>
+  <script crossorigin="anonymous" src="../external/xr/xr.js" async="true"></script>
+
+  <script>
+    const onxrloaded = () => {
+      XR8.XrController.configure({
+        imageTargetData: [
+          require('targets/joyatech-card-target.json'),
+        ],
+      })
+    }
+    window.XR8 ? onxrloaded() : window.addEventListener('xrloaded', onxrloaded)
+  </script>
+
+  <meta name="8thwall:renderer" content="aframe:1.5.0" />
+  <meta name="8thwall:package" content="@8thwall.xrextras" />
+  <meta name="8thwall:package" content="@8thwall.landing-page" />
+
+  <style>
+    /* AR UI Overlay */
+    #ar-ui-overlay {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ar-action-bar {
+      display: flex;
+      gap: 12px;
+      background: rgba(26, 26, 46, 0.9);
+      backdrop-filter: blur(12px);
+      border-radius: 24px;
+      padding: 10px 16px;
+      border: 1px solid rgba(233, 69, 96, 0.3);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .ar-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 18px;
+      text-decoration: none;
+    }
+
+    .ar-btn:hover, .ar-btn:active {
+      transform: scale(1.15);
+    }
+
+    .ar-btn-linkedin { background: #0A66C2; color: white; }
+    .ar-btn-whatsapp { background: #25D366; color: white; }
+    .ar-btn-instagram { background: linear-gradient(135deg, #833AB4, #FD1D1D, #F77737); color: white; }
+    .ar-btn-web { background: #E94560; color: white; }
+    .ar-btn-phone { background: #16213E; color: white; border: 1px solid #E94560; }
+    .ar-btn-vcard { background: #1A1A2E; color: #E94560; border: 1px solid #E94560; }
+
+    .ar-btn-label {
+      font-size: 9px;
+      color: rgba(255,255,255,0.8);
+      text-align: center;
+      margin-top: 2px;
+    }
+
+    #scan-hint {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      text-align: center;
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    #scan-hint h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+    }
+
+    #scan-hint p {
+      font-size: 13px;
+      opacity: 0.7;
+      margin: 0;
+    }
+
+    .scan-frame {
+      width: 200px;
+      height: 120px;
+      border: 2px solid rgba(233, 69, 96, 0.6);
+      border-radius: 12px;
+      margin: 0 auto 16px;
+      animation: pulse-frame 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-frame {
+      0%, 100% { border-color: rgba(233, 69, 96, 0.3); box-shadow: 0 0 20px rgba(233, 69, 96, 0.1); }
+      50% { border-color: rgba(233, 69, 96, 0.8); box-shadow: 0 0 30px rgba(233, 69, 96, 0.3); }
+    }
+
+    /* vCard download toast */
+    #vcard-toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: rgba(26, 26, 46, 0.95);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-family: system-ui;
+      font-size: 14px;
+      z-index: 2000;
+      border: 1px solid #E94560;
+      transition: transform 0.4s ease;
+    }
+
+    #vcard-toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+
+  <script>
+    // === Custom A-Frame Components ===
+
+    // Animated 3D JoyaTech Logo — glowing hexagonal prism
+    AFRAME.registerComponent('joyatech-logo-3d', {
+      init: function () {
+        const el = this.el;
+        const THREE = AFRAME.THREE;
+
+        // Create logo group
+        const group = new THREE.Group();
+
+        // Central hexagonal prism (brand core)
+        const hexShape = new THREE.Shape();
+        const size = 0.08;
+        for (let i = 0; i < 6; i++) {
+          const angle = (Math.PI / 3) * i - Math.PI / 6;
+          const x = size * Math.cos(angle);
+          const y = size * Math.sin(angle);
+          if (i === 0) hexShape.moveTo(x, y);
+          else hexShape.lineTo(x, y);
+        }
+        hexShape.closePath();
+
+        const extrudeSettings = { depth: 0.04, bevelEnabled: true, bevelThickness: 0.005, bevelSize: 0.005, bevelSegments: 3 };
+        const hexGeo = new THREE.ExtrudeGeometry(hexShape, extrudeSettings);
+        const hexMat = new THREE.MeshStandardMaterial({
+          color: 0xE94560,
+          metalness: 0.8,
+          roughness: 0.2,
+          emissive: 0xE94560,
+          emissiveIntensity: 0.3,
+        });
+        const hexMesh = new THREE.Mesh(hexGeo, hexMat);
+        hexMesh.rotation.x = -Math.PI / 2;
+        hexMesh.position.y = 0.12;
+        group.add(hexMesh);
+
+        // "J" letter in center
+        const jLoader = new THREE.FontLoader();
+        // Use a simple approach — flat plane with "J" texture or just a ring
+        const ringGeo = new THREE.TorusGeometry(0.04, 0.008, 16, 32);
+        const ringMat = new THREE.MeshStandardMaterial({
+          color: 0x16213E,
+          metalness: 0.9,
+          roughness: 0.1,
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.position.y = 0.165;
+        ring.rotation.x = -Math.PI / 2;
+        group.add(ring);
+
+        // Orbiting particles
+        const particleCount = 60;
+        const particleGeo = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+        const brandColors = [
+          new THREE.Color(0xE94560),
+          new THREE.Color(0x16213E),
+          new THREE.Color(0x1A1A2E),
+          new THREE.Color(0xFFFFFF),
+        ];
+
+        for (let i = 0; i < particleCount; i++) {
+          const theta = Math.random() * Math.PI * 2;
+          const r = 0.12 + Math.random() * 0.15;
+          positions[i * 3] = r * Math.cos(theta);
+          positions[i * 3 + 1] = 0.05 + Math.random() * 0.2;
+          positions[i * 3 + 2] = r * Math.sin(theta);
+          const c = brandColors[Math.floor(Math.random() * brandColors.length)];
+          colors[i * 3] = c.r;
+          colors[i * 3 + 1] = c.g;
+          colors[i * 3 + 2] = c.b;
+        }
+
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const particleMat = new THREE.PointsMaterial({
+          size: 0.008,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.8,
+          blending: THREE.AdditiveBlending,
+        });
+        const particles = new THREE.Points(particleGeo, particleMat);
+        group.add(particles);
+
+        // Glowing base ring
+        const baseRingGeo = new THREE.TorusGeometry(0.15, 0.003, 16, 64);
+        const baseRingMat = new THREE.MeshBasicMaterial({
+          color: 0xE94560,
+          transparent: true,
+          opacity: 0.6,
+        });
+        const baseRing = new THREE.Mesh(baseRingGeo, baseRingMat);
+        baseRing.rotation.x = -Math.PI / 2;
+        baseRing.position.y = 0.005;
+        group.add(baseRing);
+
+        // Second outer ring
+        const outerRingGeo = new THREE.TorusGeometry(0.18, 0.002, 16, 64);
+        const outerRingMat = new THREE.MeshBasicMaterial({
+          color: 0x16213E,
+          transparent: true,
+          opacity: 0.4,
+        });
+        const outerRing = new THREE.Mesh(outerRingGeo, outerRingMat);
+        outerRing.rotation.x = -Math.PI / 2;
+        outerRing.position.y = 0.003;
+        group.add(outerRing);
+
+        el.setObject3D('mesh', group);
+
+        // Store refs for animation
+        this.group = group;
+        this.hexMesh = hexMesh;
+        this.ring = ring;
+        this.particles = particles;
+        this.baseRing = baseRing;
+        this.outerRing = outerRing;
+        this.time = 0;
+      },
+
+      tick: function (t, dt) {
+        if (!this.group) return;
+        this.time += dt * 0.001;
+
+        // Rotate hex logo
+        this.hexMesh.rotation.z += 0.005;
+
+        // Pulse emissive
+        const pulse = Math.sin(this.time * 2) * 0.15 + 0.3;
+        this.hexMesh.material.emissiveIntensity = pulse;
+
+        // Orbit particles
+        const positions = this.particles.geometry.attributes.position.array;
+        for (let i = 0; i < positions.length / 3; i++) {
+          const idx = i * 3;
+          const x = positions[idx];
+          const z = positions[idx + 2];
+          const angle = Math.atan2(z, x) + 0.01;
+          const r = Math.sqrt(x * x + z * z);
+          positions[idx] = r * Math.cos(angle);
+          positions[idx + 2] = r * Math.sin(angle);
+          // Float particles up and down
+          positions[idx + 1] += Math.sin(this.time * 3 + i) * 0.0003;
+        }
+        this.particles.geometry.attributes.position.needsUpdate = true;
+
+        // Pulse base rings
+        const ringScale = 1 + Math.sin(this.time * 1.5) * 0.05;
+        this.baseRing.scale.set(ringScale, ringScale, 1);
+        this.outerRing.scale.set(1 / ringScale, 1 / ringScale, 1);
+      }
+    });
+
+    // Social icon floating buttons in 3D space
+    AFRAME.registerComponent('social-icons-3d', {
+      init: function () {
+        const THREE = AFRAME.THREE;
+        const group = new THREE.Group();
+
+        const icons = [
+          { label: 'Li', color: 0x0A66C2, x: -0.2, z: 0, url: 'https://linkedin.com/in/galsasson' },
+          { label: 'WA', color: 0x25D366, x: -0.1, z: 0.08, url: 'https://wa.me/972547773731' },
+          { label: 'IG', color: 0xC13584, x: 0, z: 0.12, url: 'https://instagram.com/joyatech.il' },
+          { label: 'WB', color: 0xE94560, x: 0.1, z: 0.08, url: 'https://joya-tech.net' },
+          { label: 'EM', color: 0x16213E, x: 0.2, z: 0, url: 'mailto:gal@joya-tech.net' },
+        ];
+
+        icons.forEach((icon, i) => {
+          // Sphere
+          const sphereGeo = new THREE.SphereGeometry(0.025, 32, 32);
+          const sphereMat = new THREE.MeshStandardMaterial({
+            color: icon.color,
+            metalness: 0.5,
+            roughness: 0.3,
+            emissive: icon.color,
+            emissiveIntensity: 0.2,
+          });
+          const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+          sphere.position.set(icon.x, 0.06, icon.z);
+          sphere.userData = { url: icon.url, index: i };
+          group.add(sphere);
+
+          // Text label
+          const canvas = document.createElement('canvas');
+          canvas.width = 64;
+          canvas.height = 64;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = 'white';
+          ctx.font = 'bold 32px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(icon.label, 32, 32);
+
+          const texture = new THREE.CanvasTexture(canvas);
+          const labelGeo = new THREE.PlaneGeometry(0.035, 0.035);
+          const labelMat = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            side: THREE.DoubleSide,
+          });
+          const label = new THREE.Mesh(labelGeo, labelMat);
+          label.position.set(icon.x, 0.095, icon.z);
+          label.lookAt(0, 0.095, -1);
+          group.add(label);
+        });
+
+        this.el.setObject3D('mesh', group);
+        this.group = group;
+        this.time = 0;
+      },
+
+      tick: function (t, dt) {
+        if (!this.group) return;
+        this.time += dt * 0.001;
+
+        // Float each sphere up/down with phase offset
+        this.group.children.forEach((child, i) => {
+          if (child.geometry && child.geometry.type === 'SphereGeometry') {
+            child.position.y = 0.06 + Math.sin(this.time * 2 + i * 0.8) * 0.015;
+          }
+        });
+      }
+    });
+
+    // Holographic name plate
+    AFRAME.registerComponent('name-plate', {
+      init: function () {
+        const THREE = AFRAME.THREE;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        // Background gradient
+        const grad = ctx.createLinearGradient(0, 0, 512, 256);
+        grad.addColorStop(0, 'rgba(26, 26, 46, 0.85)');
+        grad.addColorStop(1, 'rgba(22, 33, 62, 0.85)');
+        ctx.fillStyle = grad;
+        ctx.roundRect(10, 10, 492, 236, 20);
+        ctx.fill();
+
+        // Border
+        ctx.strokeStyle = 'rgba(233, 69, 96, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.roundRect(10, 10, 492, 236, 20);
+        ctx.stroke();
+
+        // Name
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 40px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Gal Sasson', 256, 70);
+
+        // Title
+        ctx.fillStyle = '#E94560';
+        ctx.font = '24px Arial';
+        ctx.fillText('CEO & Founder', 256, 110);
+
+        // Company
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.font = '20px Arial';
+        ctx.fillText('JoyaTech Digital Solutions', 256, 145);
+
+        // Tagline
+        ctx.fillStyle = 'rgba(233, 69, 96, 0.6)';
+        ctx.font = 'italic 16px Arial';
+        ctx.fillText('AI Automation · Web Development · Digital Strategy', 256, 180);
+
+        // Location
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '14px Arial';
+        ctx.fillText('📍 Haifa, Israel  |  🌐 joya-tech.net', 256, 215);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const geo = new THREE.PlaneGeometry(0.35, 0.175);
+        const mat = new THREE.MeshBasicMaterial({
+          map: texture,
+          transparent: true,
+          side: THREE.DoubleSide,
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.y = 0.01;
+        mesh.rotation.x = -Math.PI / 2;
+
+        this.el.setObject3D('mesh', mesh);
+      }
+    });
+
+    // Light beam effect
+    AFRAME.registerComponent('light-beams', {
+      init: function () {
+        const THREE = AFRAME.THREE;
+        const group = new THREE.Group();
+
+        const beamCount = 8;
+        for (let i = 0; i < beamCount; i++) {
+          const angle = (Math.PI * 2 / beamCount) * i;
+          const geo = new THREE.CylinderGeometry(0.001, 0.003, 0.3, 8);
+          const mat = new THREE.MeshBasicMaterial({
+            color: i % 2 === 0 ? 0xE94560 : 0x16213E,
+            transparent: true,
+            opacity: 0.15,
+          });
+          const beam = new THREE.Mesh(geo, mat);
+          beam.position.set(
+            0.1 * Math.cos(angle),
+            0.15,
+            0.1 * Math.sin(angle)
+          );
+          beam.rotation.z = Math.PI / 8 * Math.cos(angle);
+          beam.rotation.x = Math.PI / 8 * Math.sin(angle);
+          group.add(beam);
+        }
+
+        this.el.setObject3D('mesh', group);
+        this.group = group;
+        this.time = 0;
+      },
+
+      tick: function (t, dt) {
+        if (!this.group) return;
+        this.time += dt * 0.001;
+        this.group.rotation.y += 0.003;
+
+        this.group.children.forEach((beam, i) => {
+          beam.material.opacity = 0.08 + Math.sin(this.time * 2 + i) * 0.07;
+          beam.scale.y = 0.8 + Math.sin(this.time * 3 + i * 0.5) * 0.3;
+        });
+      }
+    });
+
+    // Target found/lost events — show/hide UI
+    AFRAME.registerComponent('target-events', {
+      init: function () {
+        this.el.addEventListener('xrimagefound', () => {
+          document.getElementById('ar-ui-overlay').style.display = 'flex';
+          document.getElementById('scan-hint').style.display = 'none';
+        });
+        this.el.addEventListener('xrimagelost', () => {
+          document.getElementById('ar-ui-overlay').style.display = 'none';
+          document.getElementById('scan-hint').style.display = 'block';
+        });
+      }
+    });
+  </script>
+</head>
+
+<body>
+
+  <!-- Scan hint -->
+  <div id="scan-hint">
+    <div class="scan-frame"></div>
+    <h2>Scan JoyaTech Card</h2>
+    <p>Point your camera at the business card</p>
+  </div>
+
+  <!-- AR action bar -->
+  <div id="ar-ui-overlay">
+    <div class="ar-action-bar">
+      <a class="ar-btn ar-btn-linkedin" href="https://linkedin.com/in/galsasson" target="_blank">in</a>
+      <a class="ar-btn ar-btn-whatsapp" href="https://wa.me/972547773731" target="_blank">💬</a>
+      <a class="ar-btn ar-btn-instagram" href="https://instagram.com/joyatech.il" target="_blank">📸</a>
+      <a class="ar-btn ar-btn-web" href="https://joya-tech.net" target="_blank">🌐</a>
+      <a class="ar-btn ar-btn-phone" href="tel:+972547773731">📞</a>
+      <button class="ar-btn ar-btn-vcard" onclick="downloadVCard()">👤</button>
+    </div>
+  </div>
+
+  <!-- vCard Toast -->
+  <div id="vcard-toast">Contact saved! ✅</div>
+
+  <a-scene
+    xrextras-gesture-detector
+    landing-page
+    xrextras-loading
+    xrextras-runtime-error
+    renderer="colorManagement:true; antialias:true"
+    xrweb="disableWorldTracking: true">
+
+    <a-camera position="0 4 10" raycaster="objects: .cantap" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
+
+    <a-light type="directional" intensity="0.7" position="1 1 1"></a-light>
+    <a-light type="ambient" intensity="0.8"></a-light>
+    <a-light type="point" intensity="0.5" color="#E94560" position="0 0.3 0"></a-light>
+
+    <!-- JoyaTech Card Image Target -->
+    <xrextras-named-image-target name="joyatech-card" target-events>
+
+      <!-- 3D Animated Logo -->
+      <a-entity joyatech-logo-3d position="0 0 0"></a-entity>
+
+      <!-- Holographic Name Plate -->
+      <a-entity name-plate position="0 0.005 0.15"></a-entity>
+
+      <!-- Social Icons floating in 3D -->
+      <a-entity social-icons-3d position="0 0 -0.1"></a-entity>
+
+      <!-- Light beam effects -->
+      <a-entity light-beams position="0 0 0"></a-entity>
+
+    </xrextras-named-image-target>
+
+  </a-scene>
+
+  <script>
+    // vCard download function
+    function downloadVCard() {
+      const vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:Gal Sasson
+N:Sasson;Gal;;;
+ORG:JoyaTech Digital Solutions
+TITLE:CEO & Founder
+TEL;TYPE=CELL:+972-54-777-3731
+EMAIL:gal@joya-tech.net
+URL:https://joya-tech.net
+ADR;TYPE=WORK:;;Haifa;;Israel
+NOTE:AI Automation | Web Development | Digital Strategy
+END:VCARD`;
+
+      const blob = new Blob([vcard], { type: 'text/vcard' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Gal_Sasson_JoyaTech.vcf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      // Show toast
+      const toast = document.getElementById('vcard-toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+  </script>
+
+</body>
+</html>

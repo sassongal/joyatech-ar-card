@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JoyaTech Business Card — Print Ready</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #2a2a3a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 40px;
+      gap: 40px;
+    }
+
+    h1 { color: white; font-size: 14px; opacity: 0.5; letter-spacing: 2px; text-transform: uppercase; }
+
+    .card-container {
+      width: 1050px;
+      height: 600px;
+      perspective: 1200px;
+    }
+
+    /* === FRONT OF CARD === */
+    .card-front {
+      width: 1050px;
+      height: 600px;
+      background: linear-gradient(135deg, #1A1A2E 0%, #16213E 60%, #0F3460 100%);
+      border-radius: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Geometric pattern overlay */
+    .card-front::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(233, 69, 96, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 30%, rgba(22, 33, 62, 0.3) 0%, transparent 40%);
+    }
+
+    /* Hex grid pattern */
+    .hex-grid {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      opacity: 0.04;
+      background-image:
+        linear-gradient(30deg, #E94560 12%, transparent 12.5%, transparent 87%, #E94560 87.5%, #E94560),
+        linear-gradient(150deg, #E94560 12%, transparent 12.5%, transparent 87%, #E94560 87.5%, #E94560),
+        linear-gradient(30deg, #E94560 12%, transparent 12.5%, transparent 87%, #E94560 87.5%, #E94560),
+        linear-gradient(150deg, #E94560 12%, transparent 12.5%, transparent 87%, #E94560 87.5%, #E94560);
+      background-size: 80px 140px;
+      background-position: 0 0, 0 0, 40px 70px, 40px 70px;
+    }
+
+    /* Accent line */
+    .accent-line {
+      position: absolute;
+      left: 60px;
+      top: 80px;
+      bottom: 80px;
+      width: 3px;
+      background: linear-gradient(to bottom, transparent, #E94560, transparent);
+      border-radius: 2px;
+    }
+
+    /* Logo area */
+    .logo-area {
+      position: absolute;
+      top: 60px;
+      left: 90px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-hex {
+      width: 60px;
+      height: 60px;
+      position: relative;
+    }
+
+    .logo-hex svg { width: 100%; height: 100%; }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      direction: ltr;
+    }
+
+    .logo-text .company { font-size: 28px; font-weight: 700; color: white; letter-spacing: 3px; }
+    .logo-text .tagline { font-size: 11px; color: #E94560; letter-spacing: 4px; text-transform: uppercase; margin-top: 2px; }
+
+    /* Person info */
+    .person-info {
+      position: absolute;
+      bottom: 100px;
+      left: 90px;
+      direction: ltr;
+    }
+
+    .person-name { font-size: 36px; font-weight: 300; color: white; letter-spacing: 1px; }
+    .person-title { font-size: 16px; color: #E94560; margin-top: 6px; font-weight: 500; letter-spacing: 1px; }
+
+    /* Contact strip */
+    .contact-strip {
+      position: absolute;
+      bottom: 40px;
+      left: 90px;
+      right: 90px;
+      display: flex;
+      gap: 32px;
+      direction: ltr;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .contact-item .icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #E94560;
+      font-size: 12px;
+    }
+
+    /* QR Code area (right side) */
+    .qr-area {
+      position: absolute;
+      right: 60px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .qr-box {
+      width: 140px;
+      height: 140px;
+      background: white;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(233, 69, 96, 0.2);
+    }
+
+    .qr-box::after {
+      content: 'SCAN FOR AR';
+      position: absolute;
+      bottom: -28px;
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: rgba(255, 255, 255, 0.4);
+      white-space: nowrap;
+    }
+
+    .qr-placeholder {
+      width: 110px;
+      height: 110px;
+      background: repeating-conic-gradient(#1A1A2E 0% 25%, white 0% 50%) 50% / 10px 10px;
+      border-radius: 4px;
+    }
+
+    /* AR badge */
+    .ar-badge {
+      position: absolute;
+      top: 60px;
+      right: 60px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(233, 69, 96, 0.15);
+      border: 1px solid rgba(233, 69, 96, 0.3);
+      border-radius: 20px;
+      padding: 6px 14px;
+    }
+
+    .ar-badge-dot {
+      width: 6px;
+      height: 6px;
+      background: #E94560;
+      border-radius: 50%;
+      animation: ar-pulse 2s infinite;
+    }
+
+    .ar-badge-text {
+      font-size: 10px;
+      color: #E94560;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    @keyframes ar-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* === BACK OF CARD === */
+    .card-back {
+      width: 1050px;
+      height: 600px;
+      background: linear-gradient(135deg, #1A1A2E 0%, #0F3460 100%);
+      border-radius: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-back .hex-grid {
+      opacity: 0.03;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      padding: 60px 80px;
+      position: relative;
+      z-index: 1;
+      direction: ltr;
+    }
+
+    .service-item {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .service-icon { font-size: 28px; margin-bottom: 8px; }
+    .service-name { font-size: 13px; color: white; font-weight: 600; letter-spacing: 1px; }
+    .service-desc { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+    .back-footer {
+      position: absolute;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      direction: ltr;
+    }
+
+    .back-footer .domain { font-size: 18px; color: #E94560; letter-spacing: 4px; font-weight: 300; }
+    .back-footer .location { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 8px; letter-spacing: 2px; }
+
+    .print-note {
+      color: rgba(255,255,255,0.3);
+      font-size: 11px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>FRONT</h1>
+  <div class="card-container">
+    <div class="card-front">
+      <div class="hex-grid"></div>
+      <div class="accent-line"></div>
+
+      <div class="ar-badge">
+        <div class="ar-badge-dot"></div>
+        <span class="ar-badge-text">AR Enabled</span>
+      </div>
+
+      <div class="logo-area">
+        <div class="logo-hex">
+          <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="30,2 55,17 55,43 30,58 5,43 5,17" fill="none" stroke="#E94560" stroke-width="2"/>
+            <polygon points="30,10 48,20 48,40 30,50 12,40 12,20" fill="rgba(233,69,96,0.15)"/>
+            <text x="30" y="38" text-anchor="middle" fill="#E94560" font-size="22" font-weight="700" font-family="Arial">J</text>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="company">JOYATECH</span>
+          <span class="tagline">Digital Solutions</span>
+        </div>
+      </div>
+
+      <div class="person-info">
+        <div class="person-name">Gal Sasson</div>
+        <div class="person-title">CEO & Founder</div>
+      </div>
+
+      <div class="contact-strip">
+        <div class="contact-item">
+          <span class="icon">📞</span>
+          <span>+972-54-777-3731</span>
+        </div>
+        <div class="contact-item">
+          <span class="icon">✉️</span>
+          <span>gal@joya-tech.net</span>
+        </div>
+        <div class="contact-item">
+          <span class="icon">🌐</span>
+          <span>joya-tech.net</span>
+        </div>
+        <div class="contact-item">
+          <span class="icon">📍</span>
+          <span>Haifa, Israel</span>
+        </div>
+      </div>
+
+      <div class="qr-area">
+        <div class="qr-box">
+          <div class="qr-placeholder"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h1>BACK</h1>
+  <div class="card-container">
+    <div class="card-back">
+      <div class="hex-grid"></div>
+
+      <div class="services-grid">
+        <div class="service-item">
+          <div class="service-icon">🤖</div>
+          <div class="service-name">AI Automation</div>
+          <div class="service-desc">n8n · Agents · Pipelines</div>
+        </div>
+        <div class="service-item">
+          <div class="service-icon">🌐</div>
+          <div class="service-name">Web Development</div>
+          <div class="service-desc">React · Next.js · Vercel</div>
+        </div>
+        <div class="service-item">
+          <div class="service-icon">📊</div>
+          <div class="service-name">CRM & Data</div>
+          <div class="service-desc">Airtable · Supabase · APIs</div>
+        </div>
+        <div class="service-item">
+          <div class="service-icon">📱</div>
+          <div class="service-name">Digital Strategy</div>
+          <div class="service-desc">Funnels · Growth · Analytics</div>
+        </div>
+        <div class="service-item">
+          <div class="service-icon">🎨</div>
+          <div class="service-name">Branding & Design</div>
+          <div class="service-desc">UI/UX · Figma · Identity</div>
+        </div>
+        <div class="service-item">
+          <div class="service-icon">🔗</div>
+          <div class="service-name">Integrations</div>
+          <div class="service-desc">WhatsApp · Telegram · APIs</div>
+        </div>
+      </div>
+
+      <div class="back-footer">
+        <div class="domain">joya-tech.net</div>
+        <div class="location">HAIFA · ISRAEL · 🇮🇱</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="print-note">Standard business card size: 90×50mm (3.5×2in) — Scale to print size before sending to printer</p>
+
+</body>
+</html>
